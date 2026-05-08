@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to EventsLK</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1a1a2e;padding:32px 40px;text-align:center;">
+              <h1 style="color:#e94560;margin:0;font-size:28px;letter-spacing:1px;">EventsLK</h1>
+              <p style="color:#a0a0b0;margin:8px 0 0;font-size:14px;">Sri Lanka's Premier Event Platform</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="color:#1a1a2e;margin:0 0 16px;font-size:22px;">Welcome, {{.Username}}!</h2>
+              <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+                Thanks for joining EventsLK. To complete your registration and start discovering amazing events, please verify your email address.
+              </p>
+
+              <!-- CTA Button -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 32px;">
+                <tr>
+                  <td style="background-color:#e94560;border-radius:6px;">
+                    <a href="{{.VerificationLink}}"
+                       style="display:inline-block;padding:14px 32px;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;">
+                      Verify My Email
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 8px;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="word-break:break-all;font-size:13px;color:#e94560;margin:0 0 32px;">
+                {{.VerificationLink}}
+              </p>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:0 0 24px;" />
+              <p style="color:#aaa;font-size:12px;text-align:center;margin:0;">
+                If you didn't create an EventsLK account, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9f9f9;padding:20px 40px;text-align:center;">
+              <p style="color:#bbb;font-size:12px;margin:0;">
+                &copy; 2025 EventsLK &nbsp;|&nbsp; noreply@eventslk.lk
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

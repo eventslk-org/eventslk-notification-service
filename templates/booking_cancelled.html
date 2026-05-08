@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Cancelled — EventsLK</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f4f4;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#1a1a2e;padding:32px 40px;text-align:center;">
+              <h1 style="color:#e94560;margin:0;font-size:28px;letter-spacing:1px;">EventsLK</h1>
+              <p style="color:#a0a0b0;margin:8px 0 0;font-size:14px;">Sri Lanka's Premier Event Platform</p>
+            </td>
+          </tr>
+
+          <!-- Warning Banner -->
+          <tr>
+            <td style="background-color:#fff3e0;padding:20px 40px;text-align:center;">
+              <p style="color:#e65100;font-size:16px;font-weight:bold;margin:0;">
+                &#x2715; &nbsp;Your booking has been cancelled.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="color:#1a1a2e;margin:0 0 16px;font-size:22px;">Hi, {{.Username}}</h2>
+              <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 28px;">
+                We're sorry to let you know that your booking for <strong>{{.EventName}}</strong> has been cancelled. Here is your cancellation reference:
+              </p>
+
+              <!-- Cancellation Reference Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;margin:0 0 32px;">
+                <tr style="background-color:#f9f9f9;">
+                  <td style="padding:14px 20px;font-size:13px;color:#888;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #e0e0e0;">
+                    Event
+                  </td>
+                  <td style="padding:14px 20px;font-size:15px;color:#1a1a2e;border-bottom:1px solid #e0e0e0;">
+                    {{.EventName}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px;font-size:13px;color:#888;font-weight:bold;text-transform:uppercase;letter-spacing:1px;">
+                    Booking ID
+                  </td>
+                  <td style="padding:14px 20px;font-size:17px;font-weight:bold;color:#e65100;">
+                    {{.BookingId}}
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 16px;">
+                If a refund is applicable, it will be processed to your original payment method within 5–10 business days.
+              </p>
+              <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 32px;">
+                If you did not request this cancellation or believe this is an error, please contact our support team immediately.
+              </p>
+
+              <hr style="border:none;border-top:1px solid #eee;margin:0 0 24px;" />
+              <p style="color:#aaa;font-size:12px;text-align:center;margin:0;">
+                Questions? Contact us at support@eventslk.lk
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f9f9f9;padding:20px 40px;text-align:center;">
+              <p style="color:#bbb;font-size:12px;margin:0;">
+                &copy; 2025 EventsLK &nbsp;|&nbsp; noreply@eventslk.lk
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
