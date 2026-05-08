@@ -9,11 +9,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gin-gonic/gin"
 	"eventslk-notification-service/config"
 	"eventslk-notification-service/consumer"
 	"eventslk-notification-service/email"
 	"eventslk-notification-service/eureka"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -21,10 +22,7 @@ func main() {
 	log.Printf("[main] config loaded: port=%s kafka=%s", cfg.ServerPort, cfg.KafkaBootstrapServers)
 
 	emailSender := email.NewEmailSender(
-		cfg.MailHost,
-		cfg.MailPort,
-		cfg.MailUsername,
-		cfg.MailPassword,
+		cfg.BrevoAPIKey,
 		cfg.MailFrom,
 		"templates",
 	)

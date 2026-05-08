@@ -2,12 +2,13 @@ package email
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"log"
 	"path/filepath"
 
-	"gopkg.in/gomail.v2"
+	brevo "github.com/getbrevo/brevo-go/lib"
 )
 
 type EmailMessage struct {
@@ -18,15 +19,18 @@ type EmailMessage struct {
 }
 
 type EmailSender struct {
-	dialer       *gomail.Dialer
+	client       *brevo.APIClient
 	from         string
 	templatePath string
 }
 
-func NewEmailSender(host string, port int, username, password, from, templatePath string) *EmailSender {
-	d := gomail.NewDialer(host, port, username, password)
+func NewEmailSender(apiKey, from, templatePath string) *EmailSender {
+	cfg := brevo.NewConfiguration()
+	// Add API key header used by Brevo SDK
+	cfg.AddDefaultHeader("api-key", apiKey)
+	client := brevo.NewAPIClient(cfg)
 	return &EmailSender{
-		dialer:       d,
+		client:       client,
 		from:         from,
 		templatePath: templatePath,
 	}
@@ -44,17 +48,27 @@ func (s *EmailSender) SendEmail(msg EmailMessage) error {
 		return fmt.Errorf("execute template %s: %w", msg.TemplateName, err)
 	}
 
-	m := gomail.NewMessage()
-	m.SetHeader("From", s.from)
-	m.SetHeader("To", msg.To)
-	m.SetHeader("Subject", msg.Subject)
-	m.SetBody("text/html", buf.String())
-
-	if err := s.dialer.DialAndSend(m); err != nil {
-		log.Printf("[email] failed to send to %s (subject: %s): %v", msg.To, msg.Subject, err)
-		return fmt.Errorf("send email: %w", err)
+	// Build the Brevo transactional SMTP email request. Use sender name 'EventsLK' and the configured from address.
+	sender := brevo.SendSmtpEmailSender{
+		Name:  "EventsLK",
+		Email: s.from,
 	}
 
-	log.Printf("[email] sent %s to %s", msg.TemplateName, msg.To)
+	to := []brevo.SendSmtpEmailTo{{Email: msg.To}}
+
+	req := brevo.SendSmtpEmail{
+		Sender:      &sender,
+		To:          to,
+		Subject:     msg.Subject,
+		HtmlContent: buf.String(),
+	}
+
+	_, _, err = s.client.TransactionalEmailsApi.SendTransacEmail(context.Background(), req)
+	if err != nil {
+		log.Printf("[email] failed to send to %s (subject: %s): %v", msg.To, msg.Subject, err)
+		return fmt.Errorf("send email via brevo: %w", err)
+	}
+
+	log.Printf("[email] sent %s to %s via Brevo", msg.TemplateName, msg.To)
 	return nil
 }

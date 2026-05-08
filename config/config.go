@@ -2,20 +2,18 @@ package config
 
 import (
 	"log"
+
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	ServerPort           string
+	ServerPort            string
 	KafkaBootstrapServers string
-	KafkaGroupID         string
-	MailHost             string
-	MailPort             int
-	MailUsername         string
-	MailPassword         string
-	MailFrom             string
-	EurekaServerURL      string
-	AppBaseURL           string
+	KafkaGroupID          string
+	BrevoAPIKey           string
+	MailFrom              string
+	EurekaServerURL       string
+	AppBaseURL            string
 }
 
 func LoadConfig() *Config {
@@ -30,10 +28,7 @@ func LoadConfig() *Config {
 		ServerPort:            viper.GetString("SERVER_PORT"),
 		KafkaBootstrapServers: viper.GetString("KAFKA_BOOTSTRAP_SERVERS"),
 		KafkaGroupID:          viper.GetString("KAFKA_CONSUMER_GROUP_ID"),
-		MailHost:              viper.GetString("MAIL_HOST"),
-		MailPort:              viper.GetInt("MAIL_PORT"),
-		MailUsername:          viper.GetString("MAIL_USERNAME"),
-		MailPassword:          viper.GetString("MAIL_PASSWORD"),
+		BrevoAPIKey:           viper.GetString("BREVO_API_KEY"),
 		MailFrom:              viper.GetString("MAIL_FROM"),
 		EurekaServerURL:       viper.GetString("EUREKA_SERVER_URL"),
 		AppBaseURL:            viper.GetString("APP_BASE_URL"),
