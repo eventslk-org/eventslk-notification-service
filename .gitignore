@@ -1,2 +1,16 @@
 .docs
 .env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+*.crt
+credentials.json
+secrets.*
+*.secret
+.vscode/
+.idea/
+.DS_Store
+*.log
+*.swp
