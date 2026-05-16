@@ -10,12 +10,14 @@ import (
 	"os/signal"
 	"syscall"
 
+	"eventslk-notification-service/broker"
 	"eventslk-notification-service/config"
 	"eventslk-notification-service/consumer"
 	"eventslk-notification-service/email"
 	"eventslk-notification-service/eureka"
 	"eventslk-notification-service/handler"
 
+	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,16 +26,13 @@ var templatesDir embed.FS
 
 func main() {
 	cfg := config.LoadConfig()
-	// Add this temporary debug block
 	if cfg.BrevoAPIKey == "" {
-    	log.Println("[DEBUG] CRITICAL: Brevo API Key is EMPTY!")
+		log.Println("[DEBUG] CRITICAL: Brevo API Key is EMPTY!")
 	} else {
-    	// Print the length and first 10 characters safely to verify
-    	log.Printf("[DEBUG] Brevo API Key loaded. Length: %d, Prefix: %s...", len(cfg.BrevoAPIKey), cfg.BrevoAPIKey[:10])
+		log.Printf("[DEBUG] Brevo API Key loaded. Length: %d, Prefix: %s...", len(cfg.BrevoAPIKey), cfg.BrevoAPIKey[:10])
 	}
-	log.Printf("[main] config loaded: port=%s kafka=%s", cfg.ServerPort, cfg.KafkaBootstrapServers)
+	log.Printf("[main] config loaded: port=%s broker=%s kafka=%s", cfg.ServerPort, cfg.BrokerType, cfg.KafkaBootstrapServers)
 
-	// Strip the top-level "templates/" prefix so ParseFS receives bare filenames.
 	templates, err := fs.Sub(templatesDir, "templates")
 	if err != nil {
 		log.Fatalf("[main] failed to create template sub-FS: %v", err)
@@ -43,9 +42,17 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	consumerGroup, err := consumer.StartConsumers(ctx, cfg.KafkaBootstrapServers, cfg.KafkaGroupID, emailSender)
-	if err != nil {
-		log.Fatalf("[main] failed to start Kafka consumers: %v", err)
+	selection := broker.New(cfg.BrokerType, cfg.KafkaBootstrapServers, cfg.KafkaGroupID,
+		func() sarama.ConsumerGroupHandler {
+			return consumer.NewNotificationHandler(emailSender)
+		})
+	log.Printf("[main] broker selected: requested=%s active=%s", selection.Requested, selection.Active)
+
+	if err := selection.Broker.Connect(ctx); err != nil {
+		log.Printf("[main] broker connect returned error (continuing): %v", err)
+	}
+	if err := selection.Broker.Consume(ctx, consumer.Topics); err != nil {
+		log.Printf("[main] broker consume returned error (continuing): %v", err)
 	}
 
 	instanceID := "eventslk-notification-service:" + cfg.ServerPort
@@ -79,8 +86,8 @@ func main() {
 	log.Println("[main] shutdown signal received")
 
 	cancel()
-	if err := consumerGroup.Close(); err != nil {
-		log.Printf("[main] error closing consumer group: %v", err)
+	if err := selection.Broker.Close(); err != nil {
+		log.Printf("[main] error closing broker: %v", err)
 	}
 	if eurekaStopCh != nil {
 		close(eurekaStopCh)

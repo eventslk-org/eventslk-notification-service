@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ServerPort            string
+	BrokerType            string
 	KafkaBootstrapServers string
 	KafkaGroupID          string
 	BrevoAPIKey           string
@@ -26,6 +27,7 @@ func LoadConfig() *Config {
 
 	return &Config{
 		ServerPort:            viper.GetString("SERVER_PORT"),
+		BrokerType:            viper.GetString("BROKER_TYPE"),
 		KafkaBootstrapServers: viper.GetString("KAFKA_BOOTSTRAP_SERVERS"),
 		KafkaGroupID:          viper.GetString("KAFKA_CONSUMER_GROUP_ID"),
 		BrevoAPIKey:           viper.GetString("BREVO_API_KEY"),
