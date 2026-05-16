@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,19 +14,32 @@ import (
 	"eventslk-notification-service/consumer"
 	"eventslk-notification-service/email"
 	"eventslk-notification-service/eureka"
+	"eventslk-notification-service/handler"
 
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed templates
+var templatesDir embed.FS
+
 func main() {
 	cfg := config.LoadConfig()
+	// Add this temporary debug block
+	if cfg.BrevoAPIKey == "" {
+    	log.Println("[DEBUG] CRITICAL: Brevo API Key is EMPTY!")
+	} else {
+    	// Print the length and first 10 characters safely to verify
+    	log.Printf("[DEBUG] Brevo API Key loaded. Length: %d, Prefix: %s...", len(cfg.BrevoAPIKey), cfg.BrevoAPIKey[:10])
+	}
 	log.Printf("[main] config loaded: port=%s kafka=%s", cfg.ServerPort, cfg.KafkaBootstrapServers)
 
-	emailSender := email.NewEmailSender(
-		cfg.BrevoAPIKey,
-		cfg.MailFrom,
-		"templates",
-	)
+	// Strip the top-level "templates/" prefix so ParseFS receives bare filenames.
+	templates, err := fs.Sub(templatesDir, "templates")
+	if err != nil {
+		log.Fatalf("[main] failed to create template sub-FS: %v", err)
+	}
+
+	emailSender := email.NewEmailSender(cfg.BrevoAPIKey, cfg.MailFrom, templates)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -47,9 +61,8 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.GET("/actuator/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "UP"})
-	})
+	router.GET("/actuator/health", handler.Health)
+	router.GET("/debug/send-test-email", handler.TestEmailHandler(emailSender))
 
 	go func() {
 		addr := fmt.Sprintf(":%s", cfg.ServerPort)

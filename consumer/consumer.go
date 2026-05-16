@@ -15,6 +15,7 @@ var topics = []string{
 	"eventslk.user.otp",
 	"eventslk.booking.confirmed",
 	"eventslk.booking.cancelled",
+	"eventslk.promotion",
 }
 
 // StartConsumers creates a Kafka ConsumerGroup and begins consuming all notification topics.
