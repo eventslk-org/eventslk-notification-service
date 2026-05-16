@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+const registrationRetryInterval = 10 * time.Second
+
 type eurekaRegistration struct {
 	Instance eurekaInstance `json:"instance"`
 }
@@ -39,9 +41,14 @@ type dataCenterInfo struct {
 	Name  string `json:"name"`
 }
 
-// Register posts this instance to Eureka and starts a 30-second heartbeat goroutine.
-// Close the returned channel to trigger graceful deregistration.
-// If registration fails, a non-nil error is returned and the channel is nil.
+// Register spawns a background goroutine that retries the Eureka handshake
+// every 10 seconds until it succeeds, then starts the 30-second heartbeat
+// loop. It returns immediately so a missing or late-starting Eureka server
+// never blocks startup or aborts the application.
+//
+// Close the returned channel to trigger graceful deregistration. The channel
+// is always non-nil; closing it before a successful registration cancels the
+// retry loop.
 func Register(eurekaURL, appName, instanceID, serverPort, appBaseURL string) (chan struct{}, error) {
 	parsed, err := url.Parse(eurekaURL)
 	if err != nil {
@@ -54,7 +61,6 @@ func Register(eurekaURL, appName, instanceID, serverPort, appBaseURL string) (ch
 		password, _ = parsed.User.Password()
 	}
 
-	// Base URL without credentials
 	baseURL := strings.TrimRight(
 		fmt.Sprintf("%s://%s%s", parsed.Scheme, parsed.Host, parsed.Path),
 		"/",
@@ -90,35 +96,58 @@ func Register(eurekaURL, appName, instanceID, serverPort, appBaseURL string) (ch
 	}
 
 	registerURL := fmt.Sprintf("%s/apps/%s", baseURL, upperApp)
-	if err := doRequest(http.MethodPost, registerURL, payload, username, password, http.StatusNoContent); err != nil {
-		return nil, fmt.Errorf("eureka register: %w", err)
-	}
-	log.Printf("[eureka] registered as %s (instanceId: %s)", upperApp, instanceID)
-
-	stopCh := make(chan struct{})
 	heartbeatURL := fmt.Sprintf("%s/apps/%s/%s", baseURL, upperApp, instanceID)
 
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-stopCh:
-				if err := doRequest(http.MethodDelete, heartbeatURL, nil, username, password, http.StatusOK); err != nil {
-					log.Printf("[eureka] deregister error: %v", err)
-				} else {
-					log.Printf("[eureka] deregistered %s", instanceID)
-				}
-				return
-			case <-ticker.C:
-				if err := doRequest(http.MethodPut, heartbeatURL, nil, username, password, http.StatusOK); err != nil {
-					log.Printf("[eureka] heartbeat error: %v", err)
-				}
-			}
-		}
-	}()
+	stopCh := make(chan struct{})
+
+	go registerWithRetry(registerURL, heartbeatURL, payload, username, password, instanceID, upperApp, stopCh)
 
 	return stopCh, nil
+}
+
+// registerWithRetry loops until Eureka accepts the registration or stopCh is
+// closed. Once registered, it transitions into the heartbeat loop. It never
+// returns an error to the caller — every transient failure is logged and
+// retried.
+func registerWithRetry(registerURL, heartbeatURL string, payload []byte, username, password, instanceID, upperApp string, stopCh chan struct{}) {
+	for {
+		err := doRequest(http.MethodPost, registerURL, payload, username, password, http.StatusNoContent)
+		if err == nil {
+			log.Println("[INFO] Successfully registered with Eureka Service Registry!")
+			log.Printf("[eureka] registered as %s (instanceId: %s)", upperApp, instanceID)
+			heartbeatLoop(heartbeatURL, username, password, instanceID, stopCh)
+			return
+		}
+
+		log.Printf("[WARN] Eureka registration failed. Retrying in 10 seconds... (cause: %v)", err)
+
+		select {
+		case <-stopCh:
+			log.Println("[eureka] retry loop cancelled before successful registration")
+			return
+		case <-time.After(registrationRetryInterval):
+		}
+	}
+}
+
+func heartbeatLoop(heartbeatURL, username, password, instanceID string, stopCh chan struct{}) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-stopCh:
+			if err := doRequest(http.MethodDelete, heartbeatURL, nil, username, password, http.StatusOK); err != nil {
+				log.Printf("[eureka] deregister error: %v", err)
+			} else {
+				log.Printf("[eureka] deregistered %s", instanceID)
+			}
+			return
+		case <-ticker.C:
+			if err := doRequest(http.MethodPut, heartbeatURL, nil, username, password, http.StatusOK); err != nil {
+				log.Printf("[eureka] heartbeat error: %v", err)
+			}
+		}
+	}
 }
 
 func doRequest(method, url string, body []byte, username, password string, expectedStatus int) error {

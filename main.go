@@ -64,7 +64,7 @@ func main() {
 		cfg.AppBaseURL,
 	)
 	if err != nil {
-		log.Printf("[main] eureka registration failed (continuing without discovery): %v", err)
+		log.Printf("[main] eureka setup error (registration loop not started): %v", err)
 	}
 
 	router := gin.Default()
